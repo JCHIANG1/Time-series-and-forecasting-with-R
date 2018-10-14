@@ -108,7 +108,7 @@ accmeasures2=regr.eval(test_series, forecast2$pred)
 accMeasure=rbind(accmeasures1,accmeasures2)
 print(accMeasure)
 
-# Overall, according to the model mse, mae and rmse above, the model performance for forecast power of M1 and M2 are very similar. 
+# Overall, according to the mse, mae and rmse above, the model performance for forecast power of M1 and M2 are very similar. 
 # But M1 seems to perform a little bit better. I would recommend M1, not only does it perform better, it also has fewer parameters, 
 # which helps us to better interpret the model and reduce the computation effort.
 
