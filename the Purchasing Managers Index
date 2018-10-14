@@ -1,8 +1,89 @@
-#The Institute for Supply Management (ISM) (http://www.ism.ws/) is responsible for maintaining the Purchasing Managers Index (PMI). 
-#The index is derived from monthly surveys of private sector companies. Monthly data from 01/01/1980 to 12/01/2015 are saved in the 
-#NAPM.csv file. I will apply an AR(p) autoregressive model to describe the dynamic behavior of the index
+## The Institute for Supply Management (ISM) (http://www.ism.ws/) is responsible for maintaining the Purchasing Managers Index (PMI). 
+## The index is derived from monthly surveys of private sector companies. Monthly data from 01/01/1980 to 12/01/2015 are saved in the 
+## NAPM.csv file. I will apply an AR(p) autoregressive model to describe the dynamic behavior of the index
 
-#a)Import the data in R by firt creating a time series object for index using the ts() function 
-#where the starting date is first month of 1980, and frequency is set equal to 12. 
+### a)Import the data in R by firt creating a time series object for index using the ts() function where the starting date is first month 
+### of 1980, and frequency is set equal to 12. 
+
 tb=read.csv('NAPM.csv')
 napm_index=ts(tb$index,start=c(1980,1),frequency=12)
+
+### b)Create the time plot of the index and analyze the time trend displayed by the plot 
+
+plot.ts(napm_index,main='time plot for index trend')
+
+# According to the plot, we can learn that both the mean and the variance are relatively constant.
+# Mean seems to be constant around 50, and for every 5 years there seem to be a peak for the trend.
+
+### c)Analyze if the time series is serially correlated using the ACF plot and the Ljung Box test. 
+
+acf(napm_index)
+Box.test(napm_index,lag=2,type='Ljung')
+
+# According to the ACF correlogram, the ACF trend decays to 0 very fast, suggesting that the series might be a stationary series. 
+# The box test shows that the p value is less than 0.05 which suggests that we can reject the null hypothesis and that
+# we have 95% confidence that the series is not a white noise series.
+
+### d)Analyze the PACF plot and identify the order “p” of the AR(p) model.   
+
+pacf(napm_index)
+
+# According to the plot, the partial autocorrelation seems to be significant at lag 0.1, 0.2 and 0.3 which suggests 
+# that the order for AR(p) model might be 3.
+
+### e)	Fit an adequate AR model
+
+ml=arima(napm_index,order=c(3,0,0))
+(1-pnorm(abs(ml$coef)/sqrt(diag(ml$var.coef))))*2
+
+# According to the p value, all of the coefficients are significant different from 0 in 95% confidence level, 
+# and the standard error also shows that they are all very close to 0.
+
+acf(ml$resid,plot=FALSE)
+
+# The autocorrelation values are all relatively close to 0 except for lag 0.
+
+Box.test(ml$resid,lag=4,type='Ljung',fitdf=3)
+Box.test(ml$resid,lag=5,type='Ljung',fitdf=3)
+Box.test(ml$resid,lag=10,type='Ljung',fitdf=3)
+
+# The p value of the residual is larger than 0.05 suggesting that we fail to reject the null hypothesis and 
+# we have 95% confidence that the residual series is the white noise series.
+
+hist(ml$resid)
+qqnorm(ml$resid)
+qqline(ml$resid)
+
+# Although the qq plot shows that the observations are not 100% close to the    
+# straight line, but overall the distribution of the histogram is relatively normal.
+
+### f)Draw conclusions on whether the selected model is appropriate to describe the time behavior of the PMI index.  
+ml=arima(napm_index,order=c(3,0,0))
+m2=arima(napm_index,order=c(2,0,0))
+m3=arima(napm_index,order=c(1,0,0))
+
+# The selected M1 model is an order 3 AR(1) model, 3 models with different order setting are also listed above, 
+# we can see that among all, the AR(1) model M1 has the lowest AIC value and its autocorrelation for residual are 0 
+# with different lag, suggesting that the residual series is independent.
+
+### g)Write down the expression of the estimated AR(p) model, and check if the AR model represents a stationary process
+# Vt-51.4142= 1.0534 *(vt-1-51.4142)+ 0.0414*( vt-2-51.4142)+ 0.1903* (vt-3-51.4142)+ at
+# According to the ACF correlogram, the acf trend decays to 0 very fast, suggesting that the series might be a stationary series. 
+
+### h)Compute up to 5-step ahead forecasts with origin at the end of the data and show the forecasts and their 95% prediction intervals. 
+forecast(ml,h=5,level=c(95))
+
+### i)Plot the 10-step ahead forecasts
+plot(forecast(ml,h=10))
+
+# From the plot, we can see that the trend of the series seems to be hugely declined to around index 40 once every 10 years 
+# from 1980 to 2010. But for the 10 steps ahead forecast at 2015, instead of facing a huge decline at years around 2020 the forecast 
+# trend seems to go up, therefore, I think the forecast trend is not consistent with previous series.
+
+### Conclusion
+# A PMI reading above 50 percent indicates that the manufacturing economy is generally expanding; below 50 percent that it is 
+# generally declining. With the above model result, the forecast trend is going up from index 50 for 10 step ahead forecast, 
+# hence the trend is indicating the expending economy.
+# For a stationary AR(p) model, eventually the multi-step ahead forecast will converge to the mean at 51.41
+
+
