@@ -1,1 +1,8 @@
+#The Institute for Supply Management (ISM) (http://www.ism.ws/) is responsible for maintaining the Purchasing Managers Index (PMI). 
+#The index is derived from monthly surveys of private sector companies. Monthly data from 01/01/1980 to 12/01/2015 are saved in the 
+#NAPM.csv file. I will apply an AR(p) autoregressive model to describe the dynamic behavior of the index
 
+#a)Import the data in R by firt creating a time series object for index using the ts() function 
+#where the starting date is first month of 1980, and frequency is set equal to 12. 
+tb=read.csv('NAPM.csv')
+napm_index=ts(tb$index,start=c(1980,1),frequency=12)
