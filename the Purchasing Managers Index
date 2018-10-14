@@ -58,6 +58,7 @@ qqline(ml$resid)
 # straight line, but overall the distribution of the histogram is relatively normal.
 
 ### f)Draw conclusions on whether the selected model is appropriate to describe the time behavior of the PMI index.  
+
 ml=arima(napm_index,order=c(3,0,0))
 m2=arima(napm_index,order=c(2,0,0))
 m3=arima(napm_index,order=c(1,0,0))
@@ -71,9 +72,11 @@ m3=arima(napm_index,order=c(1,0,0))
 # According to the ACF correlogram, the acf trend decays to 0 very fast, suggesting that the series might be a stationary series. 
 
 ### h)Compute up to 5-step ahead forecasts with origin at the end of the data and show the forecasts and their 95% prediction intervals. 
+
 forecast(ml,h=5,level=c(95))
 
 ### i)Plot the 10-step ahead forecasts
+
 plot(forecast(ml,h=10))
 
 # From the plot, we can see that the trend of the series seems to be hugely declined to around index 40 once every 10 years 
