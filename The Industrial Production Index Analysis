@@ -1,0 +1,118 @@
+## The Industrial Production Index (INDPRO) is an economic indicator that measures real output for all facilities located in 
+## the United States manufacturing, mining, and electric, and gas utilities. Since 1997, the Industrial Production Index has been 
+## determined from 312 individual series. The index is compiled on a monthly basis to bring attention to short-term changes in industrial 
+## production. Growth in the production index from month to month is an indicator of growth in the industry. Monthly percentage 
+## changes of the INDPRO index from January 1998 to December 2016 were obtained from the St Louis Federal Reserve Bank and are 
+## defined as Xt = (pt-pt-1)/pt-1 where pt is the monthly  Industrial Production Index. The dataset contains two variables: date, rate, 
+## where rate is the INDPRO index growth rate series. The following problem focuses on building a TS model for the INDPRO index growth 
+## rate series Xt. 
+
+###a) Import the data either in R 
+
+tb=read.csv('indpro.csv')
+INDPRO =ts(tb$rate,start=c(1998,1),frequency=12)
+
+###b)	Create the time plot of the index growth rate Xt and analyze trends displayed by the plot
+
+plot.ts(INDPRO,main='INDPRO time plot')
+
+# About the time plot, the trend seems to be rather stationary, the mean seems to be constant around 0 and for the variance except 
+# for a huge drop during 2016, it looks constant too.
+
+###c)	Analyze the distribution of Xt. 
+
+qqnorm(INDPRO)
+qqline(INDPRO)
+hist(INDPRO)
+
+# From the normal qq plot, in generall the observations are on the straight line, and from the histogram, the observations are generally
+# displaying a normall bell shape but it’s a bit skew to the left.  All in all, the distribution seems to be normal.
+
+###d)	Analyze the ACF and the PACF functions 
+
+acf(INDPRO)
+pacf(INDPRO)
+
+# From the ACF we can see that the autocorrelation decays very fast, so it is very likely the series is stationary. 
+# From the PACF, we can see that there are about 3 legs that are significantly different from 0 and for ACF there are one lag 
+# that is significant different from 0, since AR model use the PACF correlogram for the order, I think the behavior is more of an 
+# AR behavior.
+
+###e)	Apply the BIC criteria to fit the model (M1) 
+
+ml=auto.arima(ts_tb,ic=c("bic"))
+checkresiduals(ml)
+Box.test(ml$resid,lag=36,type='Ljung')
+pacf(ml$resid)
+
+# The model expression  Vt-0.8813Vt-1=at+0.8302at-1-0.2172at-2
+# The smaller the standard error, the more precise the estimate, the standard error for the coefficients here are all very close to 0 
+# and both AIC and BIC values are small. For the residual analysis, the distribution is relatively normal and the ACF correlogram 
+# shows that the series is independent.
+
+###f)	Find an alternative model (M2) for the index growth rate time series, using either an MA(q) or an AR(p) model depending on the 
+### analysis in d).
+
+ar1=arima(INDPRO,order=c(4,0,0))
+checkresiduals(ar1)
+qqnorm(ar1$resid)
+qqline(ar1$resid)
+Box.test(ar1$resid,lag=5,type='Ljung')
+(1-pnorm(abs(ar1$coef)/sqrt(diag(ar1$var.coef))))*2
+
+mv1=arima(INDPRO,order=c(0,0,7))
+checkresiduals(mv1)
+qqnorm(mv12$resid)
+qqline(mv1$resid)
+Box.test(mv1$resid,lag=5,type='Ljung')
+(1-pnorm(abs(mv1$coef)/sqrt(diag(mv1$var.coef))))*2
+
+# From previous statement in question d, the behavior of the series is more of the AR model, the statistic also shows that with the 
+# two model performance above, the AR(4) model performs better than MA(7) model because of lower AIC values and higher value of log 
+# likelihood. We have 95% confidence that the residuals of both models are all white noise (both p values are larger than 0.05) and 
+# the distribution are relatively normal. And the coefficients of both models are all significant different from 0 in 95% confidence
+# since the p values from those coefficients are all less than 0.05.
+
+# Because of the better performance of the AR(4) model and the fewer parameters in the model, I would choose the AR(4) model as M2, 
+# the expression is Vt-0.0018= 0.0729 *(vt-1-0.0018)+ 0.1745*( vt-2--0.0018)+ 0.2367* (vt-3-0.0018) + 0.1569* (vt-3-0.0018)+ at
+
+###g)	Plot the forecasts for the models M1 and M2 and compare their behavior.
+
+plot(forecast(ml)) 
+plot(forecast(ml),include=50) 
+plot(forecast(m2))
+plot(forecast(m2),include=50) 
+
+# Overall the forecast trend is very similar, but for M2 model in the first or second step ahead of forecast there seem to have 
+# some cycling before the trend converged.
+
+### h)	Apply the backtesting procedure using 85% (=194 values) of the data for training and 15% for testing to evaluate the 
+### forecasting power of both models
+
+train_series=ts(tb$rate[1:238],start=c(1998,1),frequency=12)
+test_series=ts(tb$rate[239:280],start=c(2017,11),frequency=12)
+
+arimaModel_1=arima(train_series, order=c(1,0,2))
+arimaModel_2=arima(train_series, order=c(4,0,0))
+print(arimaModel_1)
+print(arimaModel_2)
+
+forecast1=predict(arimaModel_1, 42)
+forecast2=predict(arimaModel_2, 42)
+
+plot(test_series,main='predicted vs. actual on testing set')
+lines(forecast1$pred,col="blue")
+lines(forecast2$pred,col="red")
+accmeasures1=regr.eval(test_series, forecast1$pred)
+accmeasures2=regr.eval(test_series, forecast2$pred)
+accMeasure=rbind(accmeasures1,accmeasures2)
+print(accMeasure)
+
+# Overall, according to the model mse, mae and rmse above, the model performance for forecast power of M1 and M2 are very similar. 
+# But M1 seems to perform a little bit better. I would recommend M1, not only does it perform better, it also has fewer parameters, 
+# which helps us to better interpret the model and reduce the computation effort.
+
+
+
+
+
